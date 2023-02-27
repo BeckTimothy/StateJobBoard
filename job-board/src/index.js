@@ -5,7 +5,9 @@ import App from './App';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <React.StrictMode>
+    //should be release in strictmode if it' every deployed to a production environment
+    //disabling strictmode prevents duplicate rerenders in development mode
+  //<React.StrictMode>
     <App />
-  </React.StrictMode>
+  //</React.StrictMode>
 );

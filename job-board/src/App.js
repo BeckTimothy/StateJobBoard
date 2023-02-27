@@ -1,50 +1,57 @@
 import './App.css';
-import {useState} from "react";
+import React, {useState} from "react";
 import {useEffect} from "react";
+import Position, {PositionItem} from "./components/position/Position";
 
 function App() {
-
     let stateTemplate = {
-        departmentsParsed: false,
+        judParsed: false,
+        legParsed: false,
+        execParsed: false,
         departments: [],
         positions: []
     }
     const [stateData, setStateData] = useState({});
-    const handleStateData = (data) => {
-        console.log(data)
-        setStateData(data);
-    }
-    const handleClick =()=>{
-        setStateData(localData);
-    }
-    const concatPositions = (arr) => {
-        let data = localData;
-        data.positions = data.positions.concat(arr);
-        console.log(data);
-        setStateData(data)
-    }
     let localData = {
         ...stateTemplate,
         ...stateData
     };
+    const concatDepartments = (arr) => {
+        let data = localData;
+        data.departments = data.departments.concat(arr);
+        data.departments = [...new Map(data.departments.map((m) => [m.agency, m])).values()]
+        setStateData(data)
+    }
+
+    const concatPositions = (arr) => {
+        let data = localData;
+        data.positions = data.positions.concat(arr);
+        setStateData(data)
+    }
 
 
     //step 1: build list of departments
-    const getAllDepartments = async () => {
-        localData.departments = [
-        ...await getEmployeeDepartments("Judicial"),
-        ...await getEmployeeDepartments("Legislature"),
-        ...await getEmployeeDepartments("Executive") ]
-        localData.departmentsParsed = true;
-        handleStateData(localData);
+    const getDepartments = async (branch) => {
+        await getEmployeeDepartments("Judicial")
+            .then(()=>{
+                localData.judParsed = true;
+            })
+        await getEmployeeDepartments("Legislature")
+            .then(()=>{
+                localData.legParsed = true;
+            })
+        await getEmployeeDepartments("Executive")
+            .then(()=>{
+                localData.execParsed = true;
+            })
     }
 
-    const getEmployeeDepartments = async (branch, employeeType = "All") => {
+    const getEmployeeDepartments = async (branch) => {
         let url  = "https://us-central1-nm-gov-1.cloudfunctions.net/ssp-prod/getEmployeeDepartments";
 
         url += "?operation=getEmployeeDepartments"
         url += `&branch=${branch}`
-        url += `&employeeType=${employeeType}`
+        url += `&employeeType=All`
         url += "&year=2023"
         url += "&db=b"
 
@@ -63,15 +70,32 @@ function App() {
             return data;
         });
         await data.shift();
-        return await data;
+
+        switch(branch){
+            case "Judicial":
+                localData.judParsed = true;
+                break;
+            case "Executive":
+                localData.execParsed = true;
+                break;
+            case "Legislature":
+                localData.legParsed = true;
+                break;
+        }
+
+        concatDepartments(await data);
     }
 
-    //step 2: use list of departments to build list of positions
+    useEffect( ()=>{
+        getEmployeeDepartments("Judicial")
+        getEmployeeDepartments("Executive")
+        getEmployeeDepartments("Legislature")
+    }, [])
 
+    //step 2: use list of departments to build list of positions
     const getPosition = async (branch, unit) => {
 
         let url  = "https://us-central1-nm-gov-1.cloudfunctions.net/ssp-prod/getEmployees";
-
         url += "?operation=getEmployees"
         url += `&branch=${branch}`
         url += `&employeeType=All`
@@ -79,52 +103,64 @@ function App() {
         url += `&businessUnit=${unit}`
         url += "&db=b"
 
-        const response = await fetch(url, {
+        //const response =
+        await fetch(url, {
             "method": "GET",
             "Content-Type": "application/x-www-form-urlencoded"
         })
-            .then(response => response)
-            .then(data => data)
-
-        let actualResponse = await response.json()
-
-        let data = await JSON.parse(actualResponse.result);
-
-        data = await data.filter(x => x.status === "Vacant")
-
-        concatPositions(await data);
+            .then(response => response.json())
+            .then(data => {
+                data = JSON.parse(data.result);
+                //filter non-vacant positions
+                data = data.filter(x => x.status.toLowerCase() === "vacant");
+                //filter by keyword in job title
+                //data = data.filter(x => x.position.toLowerCase().includes('application'));
+                concatPositions(data);
+            })
     }
 
-    const parseDepartment = async () => {
-        if (localData.departments.length === 0 || !localData.departmentsParsed) return;
+    const parseDepartment = () => {
+        let areAllDepartmentsProcessed = localData.departments?.length === 0
+        let areBranchesProcessed = stateData.judParsed && stateData.legParsed && stateData.execParsed;
 
-        while (localData.departments.length > 0) {
+        //escapes this function if there are either:
+        //1. No departments remaining to process
+        //2. All departments have yet to be aggregated
+        if (areAllDepartmentsProcessed  || !areBranchesProcessed) return;
 
+        if (localData.departments.length > 0) {
             let department = localData.departments.shift();
-
-            await getPosition(department.branch, department.businessUnit)
+            getPosition(department.branch, department.businessUnit)
         }
     }
+    parseDepartment();
 
-    //step 3: display list of positions to dom
-    //          - build position component
+    //step 3: filter, sort, and display list of departments
 
-    //step 4: filter list of positions
-    //          - build filter form component
-
-
-
-    if(!localData.departmentsParsed){
-        getAllDepartments()
-    }
+    //sort localData by salary midpoint
+    localData.positions = localData.positions?.sort((x,y) => {return Number(x.positionMidPoint) - Number(y.positionMidPoint)})
 
 
+
+    localData.positions = localData.positions?.filter(x => x.position.toLowerCase().includes('project manager'))
 
   return (
     <div className="App">
       <header className="App-header">
-        <p>peep</p>
-          <button onClick={parseDepartment}> Populate Vacant Positions  </button>
+        <p>peeeeeeeeep</p>
+          <button onClick={()=>{parseDepartment()}}> Populate Vacant NM State Government Positions  </button>
+          <span>{localData.positions?.length} vacant state positions</span>
+          <div className={'positionBar thick'}>
+              <span className={'spannum'}>{`Salary MidPoint`}</span>
+              <span className={'spanner-l'}>{`Position Title`}</span>
+              <span className={'spanner-r'}>{`State Department`}</span>
+          </div>
+
+          {localData.positions?.length > 0?
+              localData.positions.map(x => {
+                  return <PositionItem props={x} />
+              }): <></>
+          }
       </header>
 
     </div>
