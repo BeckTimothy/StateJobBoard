@@ -3,12 +3,14 @@ import React, {useState} from "react";
 import {useEffect} from "react";
 import Position, {PositionItem} from "./components/position/Position";
 
+
 function App() {
     let stateTemplate = {
         judParsed: false,
         legParsed: false,
         execParsed: false,
         gotJobs: false,
+        filteredPositions: [],
         departments: [],
         positions: []
     }
@@ -144,25 +146,25 @@ function App() {
 
     //step 3: filter, sort, and display list of departments
 
-    //sort localData by salary midpoint
-    localData.positions = localData.positions?.sort((x,y) => {return Number(x.positionMidPoint) - Number(y.positionMidPoint)})
+    //sort by salary midpoint
+    localData.filteredPositions = localData.positions?.sort((x,y) => {return Number(x.positionMidPoint) - Number(y.positionMidPoint)})
 
-    localData.positions = localData.positions?.filter(x => x.position.toLowerCase().includes('project manager'))
+    localData.filteredPositions = localData.positions?.filter(x => x.position.toLowerCase().includes('it project manager') || x.position.toLowerCase().includes('application developer'))
 
   return (
     <div className="App">
       <header className="App-header">
           <h1>State of New Mexico: Funded and Vacant Positions</h1>
           {localData.gotJobs ? <></>: <><p>This message will disappear when all data has been received...</p> </>}
-          <span>{localData.positions?.length} vacant state positions</span>
+          <span>Showing {localData.filteredPositions?.length} of {localData.positions?.length} vacant state positions</span>
           <div className={'positionBar thick'}>
               <span className={'spannum'}>{`Salary MidPoint`}</span>
               <span className={'spanner-l'}>{`Position Title`}</span>
               <span className={'spanner-r'}>{`State Department`}</span>
           </div>
 
-          {localData.positions?.length > 0?
-              localData.positions.map(x => {
+          {localData.filteredPositions?.length > 0?
+              localData.filteredPositions.map(x => {
                   return <PositionItem props={x} />
               }): <></>
           }

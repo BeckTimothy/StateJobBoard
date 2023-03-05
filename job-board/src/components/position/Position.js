@@ -1,4 +1,5 @@
 import React, {useState} from 'react';
+import {DepartmentDict} from "../departmentDict/departmentDict";
 
 export const PositionItem = ({props}) => {
 
@@ -7,7 +8,7 @@ export const PositionItem = ({props}) => {
             <div className={'positionBar'}>
                 <span className={'spannum'}>{`$${Math.round(props.positionMidPoint)}`}</span>
                 <span className={'spanner-l'}>{`${props.position}`}</span>
-                <span className={'spanner-r'}>{`${props.organization}`}</span>
+                <span className={'spanner-r'}><DepartmentDict department={props.organization}/></span>
             </div>
         </>
     );
