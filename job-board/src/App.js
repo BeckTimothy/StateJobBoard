@@ -1,7 +1,8 @@
 import './App.css';
 import React, {useState} from "react";
 import {useEffect} from "react";
-import Position, {PositionItem} from "./components/position/Position";
+import {PositionItem} from "./components/position/Position";
+import {Form, Button} from "react-bootstrap"
 
 
 function App() {
@@ -19,6 +20,10 @@ function App() {
         ...stateTemplate,
         ...stateData
     };
+    const [filters, setFilters] = useState([]);
+    const handleSetFilters = (arr) => {
+        setFilters(arr);
+    }
 
     const concatPositions = (arr) => {
         let data = localData;
@@ -98,8 +103,11 @@ function App() {
     }
 
     useEffect( ()=>{
-        getAllDepartments();
-    }, [])
+        let allParsed = stateData.judParsed && stateData.legParsed && stateData.execParsed && stateData.gotJobs
+        if(!allParsed) {
+            getAllDepartments();
+        }
+    },[])
 
     //step 2: use list of departments to build list of positions
     const getPosition = async (branch, unit) => {
@@ -146,16 +154,60 @@ function App() {
 
     //step 3: filter, sort, and display list of departments
 
+    const submitFilters = (event) => {
+        const form = event.currentTarget;
+
+       let arr = []
+        for(let i=0;i<form.length;i++){
+            if(form[i].checked){
+                arr.push(form[i].name)
+            }
+        }
+
+        console.log(arr)
+        handleSetFilters(arr)
+    }
+    const DatForm = () => {
+        return (
+            <Form onChange={submitFilters}>
+
+                <Form.Group controlId={`application developer`}>
+                    <Form.Check
+                        className={`checkboxes`}
+                        type={`checkbox`}
+                        id={`default-checkbox`}
+                        label={`Developers`}
+                        name={`application developer`}
+                        checked={filters.includes(`application developer`)}
+                    />
+                </Form.Group>
+
+                <Form.Group controlId={`it project manager`}>
+                    <Form.Check
+                        className={`checkboxes`}
+                        type={`checkbox`}
+                        id={`default-checkbox`}
+                        label={`IT PM`}
+                        name={`it project manager`}
+                        checked={filters.includes(`it project manager`)}
+                    />
+                </Form.Group>
+            </Form>
+        )
+    }
     //sort by salary midpoint
     localData.filteredPositions = localData.positions?.sort((x,y) => {return Number(x.positionMidPoint) - Number(y.positionMidPoint)})
 
-    localData.filteredPositions = localData.positions?.filter(x => x.position.toLowerCase().includes('it project manager') || x.position.toLowerCase().includes('application developer'))
+    if(filters?.length > 0) localData.filteredPositions = localData.positions?.filter(x => filters?.some(filter => x.position.toLowerCase().includes(filter)))
 
   return (
     <div className="App">
       <header className="App-header">
           <h1>State of New Mexico: Funded and Vacant Positions</h1>
-          {localData.gotJobs ? <></>: <><p>This message will disappear when all data has been received...</p> </>}
+          {localData.gotJobs ? <DatForm />: <><p>This message will disappear when all data has been received...</p> </>}
+
+          
+
           <span>Showing {localData.filteredPositions?.length} of {localData.positions?.length} vacant state positions</span>
           <div className={'positionBar thick'}>
               <span className={'spannum'}>{`Salary MidPoint`}</span>
@@ -173,5 +225,8 @@ function App() {
     </div>
   );
 }
+
+
+
 
 export default App;

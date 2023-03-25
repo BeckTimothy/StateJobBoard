@@ -48,3 +48,8 @@ button {
   align-self: center;
   margin-bottom: 3em;
 }
+
+.checkboxes {
+  text-align: left;
+  font-size: 0.5em;
+}
