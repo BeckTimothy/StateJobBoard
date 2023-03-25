@@ -53,3 +53,13 @@ button {
   text-align: left;
   font-size: 0.5em;
 }
+
+.boop {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+}
+.beep {
+  width: 300px
+}

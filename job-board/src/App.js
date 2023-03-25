@@ -169,9 +169,9 @@ function App() {
     }
     const DatForm = () => {
         return (
-            <Form onChange={submitFilters}>
+            <Form onChange={submitFilters} className={'boop'}>
 
-                <Form.Group controlId={`application developer`}>
+                <Form.Group controlId={`application developer`} className={'beep'}>
                     <Form.Check
                         className={`checkboxes`}
                         type={`checkbox`}
@@ -182,7 +182,7 @@ function App() {
                     />
                 </Form.Group>
 
-                <Form.Group controlId={`it project manager`}>
+                <Form.Group controlId={`it project manager`} className={'beep'}>
                     <Form.Check
                         className={`checkboxes`}
                         type={`checkbox`}
@@ -204,9 +204,9 @@ function App() {
     <div className="App">
       <header className="App-header">
           <h1>State of New Mexico: Funded and Vacant Positions</h1>
-          {localData.gotJobs ? <DatForm />: <><p>This message will disappear when all data has been received...</p> </>}
+          {localData.gotJobs ? <><DatForm /><span>This page lags when displaying several thousand results</span></>: <><p>Filters will appear when all data has been received...</p> </>}
 
-          
+
 
           <span>Showing {localData.filteredPositions?.length} of {localData.positions?.length} vacant state positions</span>
           <div className={'positionBar thick'}>
